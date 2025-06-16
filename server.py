@@ -31,13 +31,16 @@ def save_todos(todos):
 @mcp.tool()
 def add_todo(message: str) -> str:
     """
-    Add a new ToDo/note to the data storage file.
+    Add a new ToDo item with a message and timestamp.
+
+    Use this when the user wants to create a new task or reminder.
+    The ToDo is stored as 'open' by default and can later be marked as done.
 
     Args:
-        message (str): The ToDo/note content to be added.
-    
+        message (str): A short description of the ToDo (e.g. "Buy groceries").
+
     Returns:
-        str: Confirmation message indicating the note has been saved.
+        str: Confirmation message with the ToDo ID.
     """
     todos = load_todos()
     new_todo = {
@@ -56,14 +59,17 @@ def add_todo(message: str) -> str:
 @mcp.tool()
 def list_todos(only_open: bool = False) -> str:
     """
-    Read all saved ToDos/notes and return the corresponding information. 
-    If only asked for one, return the correct/required ToDo.
-    If asked to summarize, return a summarization of the corresponding ToDos.
-    If asked about a specific day/time, return the corresponding ToDos.
-    
+    Listing all current ToDos stored in the system. However, only respond with the
+    ones required/requested by the user.
+
+    If the user asks to view their tasks, this tool returns them.
+    You can filter for only open (unfinished) ToDos using the `only_open` flag.
+
+    Args:
+        only_open (bool): Set to True if only unfinished ToDos should be shown.
+
     Returns:
-        str: Required ToDo(s) as a single string seperated by line breaks.
-        If no notes exist, return a default message.
+        str: Formatted list of ToDos or a message if none are found.
     """
     todos = load_todos()
     filtered = [todo for todo in todos if not todo["done"]] if only_open else todos
@@ -75,7 +81,20 @@ def list_todos(only_open: bool = False) -> str:
 # Tool: Mark ToDo as done
 @mcp.tool()
 def mark_done(todo_id: str) -> str:
+    """
+    Mark a specific ToDo as completed.
+
+    Use this when the user finishes a task and wants to mark it as done.
+    The done timestamp is automatically stored.
+
+    Args:
+        todo_id (str): The 8-character ID of the ToDo to mark as done.
+
+    Returns:
+        str: Confirmation message or error if the ID was not found.
+    """
     todos = load_todos()
+
     for todo in todos:
         if todo["id"] == todo_id:
             if todo["id"] == todo_id:
@@ -91,6 +110,18 @@ def mark_done(todo_id: str) -> str:
 # Tool: Delete ToDo
 @mcp.tool()
 def delete_todo(todo_id: str) -> str:
+    """
+    Permanently delete a ToDo by ID.
+
+    Use this if the user wants to remove a task, regardless of its status.
+    Useful for cleaning up completed or obsolete entries.
+
+    Args:
+        todo_id (str): The 8-character ID of the ToDo to delete.
+
+    Returns:
+        str: Message indicating success or failure.
+    """
     todos = load_todos()
     new_todos = [todo for todo in todos if todo["id"] != todo_id]
 
@@ -105,12 +136,13 @@ def delete_todo(todo_id: str) -> str:
 @mcp.prompt()
 def note_summary_prompt() -> str:
     """
-    Generate a prompt asking the AI to summarize all current ToDos/notes.
+    Provide the AI with all ToDos and ask it to summarize them.
+
+    Use this when the user wants a concise summary or overview.
+    The summary should group, filter, or prioritize tasks if helpful.
 
     Returns:
-        str: A prompt string that includes all important ToDos/notes and
-         asks for a summary.
-        If no notes exist, a message will be shown indicating that.
+        str: Natural-language prompt listing all current ToDos.
     """
     todos = load_todos()
     if not todos:
@@ -123,6 +155,18 @@ def note_summary_prompt() -> str:
 # Resource
 @mcp.resource("greeting://{name}")
 def get_greeting(name: str) -> str:
+    """
+    Return a personalized greeting in the context of ToDo management.
+
+    Useful when the user first interacts with the system and may
+    want to check their tasks or add new ones.
+
+    Args:
+        name (str): The user's name, used for personalization.
+
+    Returns:
+        str: A friendly greeting message.
+    """
     return f"Hi {name}, would you like to manage your ToDos now?"
 
 if __name__ == "__main__":
