@@ -1,23 +1,33 @@
 # server.py
-from mcp.server.fastmcp import FastMCP
-from datetime import datetime
 import os
+import json
+import uuid
+from datetime import datetime
+from mcp.server.fastmcp import FastMCP
 
 # Create an MCP server
-mcp = FastMCP("AI ToDos")
+mcp = FastMCP("MCP ToDos")
 
-FOLDER_NAME = "Data"
-FOLDER_PATH = os.path.join(os.path.dirname(__file__), FOLDER_NAME)
+FOLDER_PATH = os.path.join(os.path.dirname(__file__), "Data")
 os.makedirs(FOLDER_PATH, exist_ok=True)
-SAVED_DATA = os.path.join(FOLDER_PATH, "saved_data.txt")
+DATA_FILE = os.path.join(FOLDER_PATH, "todos.json")
 
 # Helper function for ensuring that file for storing data exists
 def ensure_file_exists():
-    if not os.path.exists(SAVED_DATA):
-        with open(SAVED_DATA, "w") as f:
-            f.write("")
+    if not os.path.exists(DATA_FILE):
+        with open(DATA_FILE, "w") as f:
+            json.dump([], f)
 
-# Add-ToDo Tool
+def load_todos():
+    ensure_file_exists()
+    with open(DATA_FILE, "r") as f:
+        return json.load(f)
+    
+def save_todos(todos):
+    with open(DATA_FILE, "w") as f:
+        json.dump(todos, f, indent=2)
+
+# Tool: Add ToDos
 @mcp.tool()
 def add_todo(message: str) -> str:
     """
@@ -29,20 +39,22 @@ def add_todo(message: str) -> str:
     Returns:
         str: Confirmation message indicating the note has been saved.
     """
-    ensure_file_exists()
+    todos = load_todos()
+    new_todo = {
+        "id": uuid.uuid4().hex[:8],
+        "message": message,
+        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "done": False,
+        "done_at": None
+    }
 
-    # Log data (Time & Date)
-    curr_time = datetime.now()
-    timestamp_str = curr_time.strftime("%Y-%m-%d %H:%M:%S") + ": "
+    todos.append(new_todo)
+    save_todos(todos)
+    return f"ToDo added with ID {new_todo['id']}."
 
-    with open(SAVED_DATA, "a") as f:
-        f.write(timestamp_str + message + "\n")
-
-    return "ToDo saved!"
-
-# Read-ToDo Tool
+# Tool: Show ToDos
 @mcp.tool()
-def read_notes() -> str:
+def list_todos(only_open: bool = False) -> str:
     """
     Read all saved ToDos/notes and return the corresponding information. 
     If only asked for one, return the correct/required ToDo.
@@ -53,12 +65,41 @@ def read_notes() -> str:
         str: Required ToDo(s) as a single string seperated by line breaks.
         If no notes exist, return a default message.
     """
-    ensure_file_exists()
+    todos = load_todos()
+    filtered = [todo for todo in todos if not todo["done"]] if only_open else todos
+    if not filtered:
+        return "No ToDos found."
+    
+    return "\n".join(f"[{'x' if t['done'] else ' '}] ({t['id']}) {t['message']} – {t['created_at']}" for t in filtered)
 
-    with open(SAVED_DATA, "r") as f:
-        content = f.read().strip()
+# Tool: Mark ToDo as done
+@mcp.tool()
+def mark_done(todo_id: str) -> str:
+    todos = load_todos()
+    for todo in todos:
+        if todo["id"] == todo_id:
+            if todo["id"] == todo_id:
+                if todo["done"]:
+                    return "ToDo is already marked as done."
+                todo["done"] = True
+                todo["done_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                save_todos(todos)
 
-    return content or "ToDo list is empty."
+                return f"ToDo {todo_id} marked as done."
+    return f"No ToDo found with ID {todo_id}."
+
+# Tool: Delete ToDo
+@mcp.tool()
+def delete_todo(todo_id: str) -> str:
+    todos = load_todos()
+    new_todos = [todo for todo in todos if todo["id"] != todo_id]
+
+    if len(new_todos) == len(todos):
+        return f"No ToDo found with ID {todo_id}."
+    
+    save_todos(new_todos)
+
+    return f"ToDo {todo_id} deleted."
 
 # Custom prompt
 @mcp.prompt()
@@ -71,19 +112,18 @@ def note_summary_prompt() -> str:
          asks for a summary.
         If no notes exist, a message will be shown indicating that.
     """
-    ensure_file_exists()
-    with open(SAVED_DATA, "r") as f:
-        content = f.read().strip()
-    if not content:
-        return "ToDo list is empty."
+    todos = load_todos()
+    if not todos:
+        return "There are no ToDos to summarize."
+    
+    text = "\n".join(f"{'[x]' if t['done'] else '[ ]'} {t['message']}" for t in todos)
+    
+    return f"Summarize the following ToDos:\n{text}"
 
-    return f"Summarize the current ToDos: {content}"
-
-# Add a dynamic greeting resource
+# Resource
 @mcp.resource("greeting://{name}")
 def get_greeting(name: str) -> str:
-    """Get a personalized greeting in the context of ToDos/notes"""
-    return f"Hello, {name}. Do you want to get an overview of your ToDos?"
+    return f"Hi {name}, would you like to manage your ToDos now?"
 
 if __name__ == "__main__":
-    print(SAVED_DATA)
+    print("ToDo system initialized at:", DATA_FILE)
