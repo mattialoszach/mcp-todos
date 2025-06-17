@@ -1,31 +1,10 @@
-# server.py
-import os
-import json
 import uuid
 from datetime import datetime
 from mcp.server.fastmcp import FastMCP
+from utils import DATA_FILE, ensure_file_exists, load_todos, save_todos
 
 # Create an MCP server
 mcp = FastMCP("MCP ToDos")
-
-FOLDER_PATH = os.path.join(os.path.dirname(__file__), "Data")
-os.makedirs(FOLDER_PATH, exist_ok=True)
-DATA_FILE = os.path.join(FOLDER_PATH, "todos.json")
-
-# Helper function for ensuring that file for storing data exists
-def ensure_file_exists():
-    if not os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "w") as f:
-            json.dump([], f)
-
-def load_todos():
-    ensure_file_exists()
-    with open(DATA_FILE, "r") as f:
-        return json.load(f)
-    
-def save_todos(todos):
-    with open(DATA_FILE, "w") as f:
-        json.dump(todos, f, indent=2)
 
 # Tool: Add ToDos
 @mcp.tool()
