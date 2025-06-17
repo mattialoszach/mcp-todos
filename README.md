@@ -1,6 +1,9 @@
 # 📝 MCP ToDo Server
 A lightweight Model Context Protocol (MCP) server designed for managing ToDos. Easily integrated into the Claude Desktop environment or used standalone with mcp dev. Built with simplicity, persistence, and user-guided interaction in mind.
 
+<img src="img/img1.png" alt="Screenshot" width="600">
+<img src="img/img3.png" alt="Screenshot" width="600">
+
 ## ✨ Features
 - Add, list, complete, and delete ToDos via AI commands
 - JSON file-based persistence in a dedicated Data/ folder
@@ -53,6 +56,9 @@ Each ToDo includes:
 | delete_todo    | Permanently delete a ToDo    |
 | note_summary_prompt    | Generates a summary of all current tasks    |
 | get_greeting    | Personalized greeting resource for users    |
+
+<img src="img/img2.png" alt="Screenshot" width="600">
+<img src="img/img4.png" alt="Screenshot" width="600">
 
 ## 🧰 Developer Notes
 - This repo assumes a local folder Data/ for persistent storage.
