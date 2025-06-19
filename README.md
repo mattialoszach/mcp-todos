@@ -19,7 +19,7 @@ Clone this repo then:
 uv sync
 ```
 
-### ▶️ Running the Server
+### ▶️ Running the Server / Adding to Claude Desktop Config
 With uv:
 ```bash
 uv run mcp install server.py
